@@ -237,6 +237,7 @@ object DependencyGraph extends SimpleLogger {
 
   // scalastyle:off cyclomatic.complexity
   def apply(circuit: Circuit, interpreter: FirrtlTerp): DependencyGraph = {
+    println(s"Building dependency graph.")
     val module = findModule(circuit.main, circuit) match {
       case regularModule: Module => regularModule
       case externalModule: ExtModule =>
@@ -250,7 +251,7 @@ object DependencyGraph extends SimpleLogger {
     dependencyGraph.numberOfNodes = 0
     dependencyGraph.numberOfStatements = 0
 
-    //    setVerbose(true)
+    setVerbose(true)
 
     processModule("", module, dependencyGraph)
 
@@ -272,7 +273,7 @@ object DependencyGraph extends SimpleLogger {
       val v = dependencyGraph.nameToExpression(k).serialize
       log(s"  $k -> (" + v.toString.take(MaxColumnWidth) + ")")
     }
-    println(s"End of dependency graph")
+    println(s"End of dependency graph!!!!")
     dependencyGraph
   }
   // scalastyle:on cyclomatic.complexity

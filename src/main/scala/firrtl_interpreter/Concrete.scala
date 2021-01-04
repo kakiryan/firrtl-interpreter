@@ -18,12 +18,17 @@ package firrtl_interpreter
 
 import firrtl.ir._
 
+import scala.util.Random.nextInt
+
 // scalastyle:off number.of.methods
 trait Concrete {
   val value : BigInt
+
   val width : Int
   val lowBitOffset = 0
+  val symbol: String = getSymbol(width)
 
+  def getSymbol(length: Int) = (nextInt(26) + 'A').toChar.toString + (0 until length).map(_ => nextInt(10)).mkString
   def poisoned: Boolean
   def poisonString: String = if(poisoned) "P" else ""
   def poison(p1: Boolean, p2: Boolean) : Boolean = p1 || p2
@@ -333,6 +338,10 @@ trait Concrete {
   def showValue: String = {
     def showPoison: String = if(poisoned) "☠" else ""
     s"$showPoison $value$showPoison"
+  }
+
+  def showSymbol: String = {
+    s" $symbol"
   }
 }
 object Concrete {

@@ -192,6 +192,9 @@ class LoFirrtlExpressionEvaluator(val dependencyGraph: DependencyGraph, val circ
   def comparisonOp(opCode: PrimOp, args: Seq[Expression], tpe: Type): Concrete = {
     val arg1 = evaluate(args.head)
     val arg2 = evaluate(args.tail.head)
+    println("arg1 is "+ arg1)
+    println("arg2 is " + arg2)
+    println("opcode is" + opCode)
     opCode match {
       case Eq      => arg1 == arg2
       case Neq     => arg1 != arg2
@@ -254,6 +257,10 @@ class LoFirrtlExpressionEvaluator(val dependencyGraph: DependencyGraph, val circ
   def binaryBitWise(opCode: PrimOp, args: Seq[Expression], tpe: Type): Concrete = {
     val arg1 = evaluate(args.head)
     val arg2 = evaluate(args.tail.head)
+    println("evaluating " + opCode + " expression")
+    println("arg1 is "+ arg1)
+    println("arg2 is " + arg2)
+
     opCode match {
       case And    => arg1 & arg2
       case Or     => arg1 | arg2
@@ -456,7 +463,6 @@ class LoFirrtlExpressionEvaluator(val dependencyGraph: DependencyGraph, val circ
   }
   private def resolveDependency(key: String): Concrete = {
     resolveDepth += 1
-
     val value = timer(key) {
       if (circuitState.isInput(key)) {
         circuitState.getValue(key).get
@@ -483,11 +489,11 @@ class LoFirrtlExpressionEvaluator(val dependencyGraph: DependencyGraph, val circ
     circuitState.setValue(key, value)
 
     resolveDepth -= 1
-
     value
   }
 
   def resolveDependencies(specificDependencies: Iterable[String]): Unit = {
+    // print(circuitState.prettyString())
     val toResolve: Iterable[String] = {
       if(specificDependencies.nonEmpty) {
         specificDependencies

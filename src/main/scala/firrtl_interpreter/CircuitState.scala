@@ -51,6 +51,14 @@ object CircuitState {
       port.name -> TypeInstanceFactory(port.tpe)
     }: _*)
   }
+
+  def makePortToSymbolicValueMap(
+                                  dependencyGraph: DependencyGraph,
+                                  direction: Direction): mutable.Map[String, String] = {
+    mutable.Map(dependencyGraph.module.ports.filter(_.direction == direction).map { port =>
+      port.name -> TypeInstanceFactory(port.tpe).getSymbol(2)
+    }: _*)
+  }
 }
 
 /**
@@ -73,6 +81,8 @@ case class CircuitState(
   val rhsOutputs    = new mutable.HashSet[String] // used to see if output has been computed as rhs
 
   var nameToConcreteValue = mutable.HashMap((inputPorts ++ outputPorts ++ registers).toSeq:_*)
+  // var nameToSymbol = mutable.HashMap((inputPorts ++ outputPorts ++ registers).toSeq:_*)
+
 
   var stateCounter: Int  = 0
   var isStale: Boolean   = true
@@ -171,6 +181,7 @@ case class CircuitState(
     * cycle all memories
     */
   def cycle(): Unit = {
+    print(this.prettyStringSymbolic())
     registers.keys.foreach { key =>
       val nextValue = nextRegisters(key)
       vcdWireChangedwire(key, nextValue)
@@ -180,6 +191,8 @@ case class CircuitState(
     cycleMemories()
 
     nameToConcreteValue = mutable.HashMap((inputPorts ++ outputPorts ++ registers).toSeq:_*)
+   // nameToSymbol = mutable.HashMap((inputPorts ++ outputPorts ++ registers).toSeq:_*)
+
     isStale = true
 
     stateCounter += 1
@@ -194,6 +207,7 @@ case class CircuitState(
     if(isInput(key)) {
       inputPorts(key) = concreteValue
       nameToConcreteValue(key) = concreteValue
+      // nameToSymbol(key) = concreteValue.getSymbol(2)
       vcdWireChangedwire(key, concreteValue)
     }
     else if(isOutput(key)) {
@@ -269,6 +283,29 @@ case class CircuitState(
     def showConcreteValues(msg: String, m: Map[String, Concrete]): String = {
       m.keys.toSeq.sorted.map { key =>
         s"$key=${m(key).showValue}"
+      }.mkString(msg + prefix, separator, postfix)
+    }
+    s"""
+       |CircuitState $stateCounter (${if(isStale) "STALE" else "FRESH"})
+       |${showConcreteValues("Inputs", inputPorts.toMap)}
+       |${showConcreteValues("Outputs", outputPorts.toMap)}
+       |${showConcreteValues("Registers      ", registers.toMap)}
+       |${showConcreteValues("FutureRegisters", nextRegisters.toMap)}
+       |${showConcreteValues("Ephemera", ephemera.toMap)}
+       |Memories${memories.values.mkString("\n", "\n  ", "")}""".stripMargin
+  }
+
+  /**
+   * prints a human readable version of the symbolic state,
+   *
+   * @param dense if true puts input, output and registers on one line each
+   * @return
+   */
+  def prettyStringSymbolic(dense: Boolean = true): String = {
+    val (prefix, separator, postfix) = if(dense) (": ", ", ", "") else (":\n  ", "\n  ", "")
+    def showConcreteValues(msg: String, m: Map[String, Concrete]): String = {
+      m.keys.toSeq.sorted.map { key =>
+        s"$key=${m(key).showSymbol}"
       }.mkString(msg + prefix, separator, postfix)
     }
     s"""
